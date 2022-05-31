@@ -3,6 +3,7 @@
 #include <pthread.h>
 // #include <semaphore.h>
 
+//BUSY WAITING IS USED
 int flag = 0;
 int row = 0;
 int m;
