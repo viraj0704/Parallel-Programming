@@ -12,7 +12,7 @@ vector<pair<int,int>>pairs;
 
 pthread_mutex_t lock1;
 void* task(void* rank);
-int out[10000];
+double out[10000];
 // For parsing the input graph dataset
 void parseGraphDataset(ifstream &inp, vector<Graph> &graph_dataset, int &dataset_size);
 
@@ -46,7 +46,7 @@ vector<Graph> graph_dataset;
 
 int main(int argc, char const *argv[])
 {
-	if(argc!=5)
+	if(argc!=6)
 		usage();
 	//int GED = stod(argv[2]);  // threshold to write only those graph pairs to all_graph_file.txt
 	double simScore_threshold =stod(argv[2]);
@@ -114,18 +114,20 @@ int main(int argc, char const *argv[])
        // {
        // #pragma omp for
 
+	// VIRAJ WORK FROM HERE
+	
 	long thread;
-    pthread_t* thread_handles;
+    	pthread_t* thread_handles;
 	
 
 	thread_count = stol(argv[5]);
 
 	for (int i = 0; i < 1000; i++)
 	{
-		out[i] = 0;
+		out[i] = 0; // array of similairty between pairs
 	}
 	
-	cout << "Hi" << endl;
+	
 
 	
 	
@@ -149,6 +151,7 @@ int main(int argc, char const *argv[])
 			// Incrementing count... 
 			
 		}
+		// I don't know what to do with this portion
 		
 		clTemp1 = chrono::high_resolution_clock::now();
 		g_time[g1] = clocksTosec(clTemp0,clTemp1); // graph's similarity calculation time
@@ -187,22 +190,28 @@ int main(int argc, char const *argv[])
 	}
 	
 	
-	thread_handles = (pthread_t*)malloc(thread_count*(sizeof(pthread_t)));
-	pairs = similarity_pairs;
+	thread_handles = (pthread_t*)malloc(thread_count*(sizeof(pthread_t))); // creating threads
+	pairs = similarity_pairs; // keeping pairs shared with all threads
+
+	// for(int i=0;i<pairs.size();i++){
+	// 	cout << pairs[i].first << " " << pairs[i].second << endl;
+	// }
 	pthread_mutex_init(&lock1,NULL);
     for(thread =0;thread < thread_count;thread++){
 		
-        pthread_create(&thread_handles[thread],NULL,task,(void*)thread);
+        pthread_create(&thread_handles[thread],NULL,task,(void*)thread); // passing the thread_id to function task
     }
 
 	for(thread=0;thread<thread_count;thread++){
-        pthread_join(thread_handles[thread],NULL);
+        pthread_join(thread_handles[thread],NULL); // Joining the threads
     }
 
 	for(int i=0;i<pairs.size();i++){
-		cout << out[i] << endl;
+		cout << pairs[i].first << " " << pairs[i].second << " " <<  out[i] << endl; // outputing on cmd the pairs and there percentage
 	}
-
+	
+	// NOW DIRECT CODE OF FUNCTIONS FROM 262 - 293
+	
 /*	 ifstream ifp("2k_gsim23.txt");  
 	unsigned i,j,ged,cot=0;
     while(ifp>>i and  ifp>>j and ifp>>ged){
@@ -252,28 +261,38 @@ int main(int argc, char const *argv[])
 }
 
 double simfunc(int g1,int g2){
-	double common = 0.0;
+	double common = 0;
 	double simScore = computeSimilarity(graph_dataset[g1], graph_dataset[g2], common,  e_label);
-
-
+	// cout << simScore << endl;
+	return simScore;
 	
 }
 
 void* task(void* rank){
 	long m = pairs.size();
-
+	// cout << "hi" << endl;
     long my_rank = (long) rank;
     int local_m = m/thread_count;
     int my_first_row = local_m*my_rank;
     int my_last_row = (local_m)*(my_rank+1) - 1;
 
+	if(local_m == 0){ // If number of pairs are < thread_count
+		if(my_rank < m){
+			
+			
+		out[my_rank] = simfunc(pairs[my_rank].first,pairs[my_rank].second);
+		}
+		return NULL;
+	}
+	
 	for(int i=my_first_row;i<=my_last_row;i++){
-		out[i] = simfunc(pairs[i].first,pairs[i].second);
+		out[i] = simfunc(pairs[i].first,pairs[i].second); // calling simfunc()
 
 	}
 	return NULL;
 
 }
+
 // For parsing the input graph dataset
 void parseGraphDataset(ifstream &dataset_file, vector<Graph> &graph_dataset, int &dataset_size)
 {
