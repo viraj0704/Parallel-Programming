@@ -1,5 +1,9 @@
 # Parallel-Programming
 
+Computing similarity between two graphs using Vertex edge overlap method with shared memory parallelization 
+
+# Table of contents
+- [Static Parallelization](#static)
 1. STATIC PARALLELISATION <br/>
 run the code <br/>
 $ g++ naive.cpp veo.cpp graph.cpp -o naive -lpthread <br/>
